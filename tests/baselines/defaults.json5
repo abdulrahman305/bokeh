@@ -1912,6 +1912,20 @@
     hidpi: true,
     output_backend: "canvas",
   },
+  Comparison: {
+    __extends__: "Model",
+  },
+  CustomJSCompare: {
+    __extends__: "Comparison",
+    args: {
+      type: "map",
+    },
+    code: "",
+  },
+  NanCompare: {
+    __extends__: "Comparison",
+    ascending_first: false,
+  },
   CoordinateMapping: {
     __extends__: "Model",
     x_source: {
@@ -5731,6 +5745,14 @@
     num_minor_ticks: 5,
     desired_num_ticks: 6,
   },
+  CustomJSTicker: {
+    __extends__: "Ticker",
+    args: {
+      type: "map",
+    },
+    major_code: "",
+    minor_code: "",
+  },
   DatetimeTicker: {
     __extends__: "CompositeTicker",
     num_minor_ticks: 0,
@@ -7156,6 +7178,8 @@
   },
   DateFormatter: {
     __extends__: "StringFormatter",
+    nan_format: "-",
+    null_format: "-",
     format: "ISO-8601",
   },
   GroupingInfo: {
@@ -7184,6 +7208,8 @@
   },
   NumberFormatter: {
     __extends__: "StringFormatter",
+    nan_format: "-",
+    null_format: "-",
     format: "0,0",
     language: "en",
     rounding: "round",
@@ -7197,6 +7223,8 @@
   },
   ScientificFormatter: {
     __extends__: "StringFormatter",
+    nan_format: "-",
+    null_format: "-",
     precision: 10,
     power_limit_high: 5,
     power_limit_low: -3,
@@ -7227,7 +7255,8 @@
       type: "value",
       value: null,
     },
-    nan_format: "-",
+    nan_format: "NaN",
+    null_format: "(null)",
   },
   SumAggregator: {
     __extends__: "RowAggregator",
@@ -7253,6 +7282,7 @@
     sortable: true,
     default_sort: "ascending",
     visible: true,
+    sorter: null,
   },
   TableWidget: {
     __extends__: "Widget",

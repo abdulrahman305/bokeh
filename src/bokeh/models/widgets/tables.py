@@ -47,6 +47,7 @@ from ...core.properties import (
 )
 from ...core.property.singletons import Intrinsic
 from ...model import Model
+from ..comparisons import Comparison
 from ..sources import CDSView, ColumnDataSource, DataSource
 from .widget import Widget
 
@@ -150,8 +151,12 @@ class StringFormatter(CellFormatter):
     An optional background color.
     """)
 
-    nan_format = String("-", help="""
-    Formatting to apply to NaN and None values.
+    nan_format = String("NaN", help="""
+    Formatting to apply to NaN and NaT values.
+    """)
+
+    null_format = String("(null)", help="""
+    Formatting to apply to None / null values.
     """)
 
 
@@ -178,6 +183,10 @@ class ScientificFormatter(StringFormatter):
     Limit the use of scientific notation to when::
         log(x) <= power_limit_low
     """)
+
+    nan_format = Override(default="-")
+
+    null_format = Override(default="-")
 
 class NumberFormatter(StringFormatter):
     ''' Number cell formatter.
@@ -271,6 +280,10 @@ class NumberFormatter(StringFormatter):
     rounding = Enum(RoundingFunction, help="""
     Rounding functions (round, floor, ceil) and their synonyms (nearest, rounddown, roundup).
     """)
+
+    nan_format = Override(default="-")
+
+    null_format = Override(default="-")
 
 class BooleanFormatter(CellFormatter):
     ''' Boolean (check mark) cell formatter.
@@ -499,6 +512,10 @@ class DateFormatter(StringFormatter):
 
     """)
 
+    nan_format = Override(default="-")
+
+    null_format = Override(default="-")
+
 
 class HTMLTemplateFormatter(CellFormatter):
     ''' HTML formatter using a template.
@@ -714,6 +731,9 @@ class TableColumn(Model):
 
     visible = Bool(True, help="""
     Whether this column shold be displayed or not.
+    """)
+
+    sorter = Nullable(Instance(Comparison), help="""
     """)
 
 @abstract

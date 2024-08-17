@@ -17,7 +17,8 @@ import {
   LinearColorMapper,
   Plot,
   TeX,
-  Toolbar, ToolProxy, PanTool, PolySelectTool, LassoSelectTool, HoverTool, ZoomInTool, ZoomOutTool, RangeTool, WheelPanTool,
+  Toolbar, ToolProxy,
+  PanTool, PolySelectTool, LassoSelectTool, HoverTool, ZoomInTool, ZoomOutTool, RangeTool, WheelPanTool, WheelZoomTool,
   TileRenderer, WMTSTileSource,
   ImageURLTexture,
   Row, Column, Spacer,
@@ -4054,6 +4055,71 @@ describe("Bug", () => {
 
       dropdown.menu = ["New Action 1", "New Action 2", "New Action 3"]
       await view.ready
+    })
+  })
+
+  describe("in issue #13827", () => {
+    it("doesn't allow to respect maintain_focus=false when zooming", async () => {
+      const p = fig([200, 200], {
+        x_range: new Range1d({bounds: [1, 5], start: 1, end: 2}),
+        y_range: new Range1d({bounds: [2, 7], start: 4, end: 6.5}),
+        tools: "reset,pan",
+      })
+
+      p.line({
+        x: [1, 2, 3, 4, 5],
+        y: [6, 7, 2, 4, 5],
+      })
+
+      const wheel_zoom = new WheelZoomTool({maintain_focus: false})
+      p.add_tools(wheel_zoom)
+      p.toolbar.active_scroll = wheel_zoom
+
+      const {view} = await display(p)
+      const ac = actions(view, {units: "screen"})
+
+      for (const _ of range(0, 10)) {
+        await ac.scroll_down(xy(100, 100))
+        await view.ready
+      }
+    })
+  })
+
+  describe("in issue #14013", () => {
+    async function test(fn: (p: Figure) => GlyphRenderer) {
+      const p = fig([300, 150])
+
+      p.x_range = new Range1d({start: 0, end: 1000})
+      p.y_range = new Range1d({start: -1000, end: 1000})
+
+      // Set the second Y axis range to be offset from the primary Y axis range
+      p.extra_y_ranges = {
+        y_range2: new Range1d({start: 250, end: -750}),
+      }
+
+      p.add_layout(new LinearAxis({y_range_name: "y_range2"}), "left")
+
+      const gr = fn(p)
+      gr.y_range_name = "y_range2"
+
+      const {view} = await display(p)
+
+      const [sx0, sx1] = view.frame.x_scale.r_compute(500, 500)
+      const [sy0, sy1] = view.frame.y_scale.r_compute(-500, 550)
+
+      await actions(view, {units: "screen"}).pan(xy(sx0, sy0), xy(sx1, sy1))
+    }
+
+    const coords = [[100, 0], [900, 0], [900, -500], [100, -500]]
+    const xs = coords.map(([x, _]) => x)
+    const ys = coords.map(([_, y]) => y)
+
+    it("doesn't allow to respect secondary ranges when masking data in Patches glyph", async () => {
+      await test((p) => p.patches([xs], [ys]))
+    })
+
+    it("doesn't allow to respect secondary ranges when masking data in MultiPolygons glyph", async () => {
+      await test((p) => p.multi_polygons([[[xs]]], [[[ys]]]))
     })
   })
 })
