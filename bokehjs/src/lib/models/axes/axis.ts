@@ -53,9 +53,11 @@ export type TickCoords = {
   minor: Coords
 }
 
-export class AxisView extends GuideRendererView {
+export abstract class AxisView extends GuideRendererView {
   declare model: Axis
   declare visuals: Axis.Visuals
+
+  declare readonly RangeType: Range
 
   layout?: Layoutable
 
@@ -332,10 +334,9 @@ export class AxisView extends GuideRendererView {
 
     const [sxs, sys]   = this.scoords(coords)
     const [nx, ny]     = this.normals
-    const [xoff, yoff] = this.offsets
 
-    const [nxin,  nyin]  = [nx * (xoff-tin),  ny * (yoff-tin)]
-    const [nxout, nyout] = [nx * (xoff+tout), ny * (yoff+tout)]
+    const [nxin,  nyin]  = [nx * -tin, ny * -tin]
+    const [nxout, nyout] = [nx * tout, ny * tout]
 
     visuals.set_value(ctx)
 
@@ -360,12 +361,11 @@ export class AxisView extends GuideRendererView {
     }
 
     const [sxs, sys] = this.scoords(coords)
-    const [xoff, yoff] = this.offsets
 
     const [nx, ny] = this.normals
 
-    const nxd = nx*(xoff + standoff)
-    const nyd = ny*(yoff + standoff)
+    const nxd = nx*standoff
+    const nyd = ny*standoff
 
     const {vertical_align, align} = this.panel.get_label_text_heuristics(orient)
     const angle = this.panel.get_label_angle_heuristic(orient)
@@ -557,12 +557,7 @@ export class AxisView extends GuideRendererView {
     }
   }
 
-  // TODO Remove this.
-  get offsets(): [number, number] {
-    return [0, 0]
-  }
-
-  get ranges(): [Range, Range] {
+  get ranges(): [typeof this["RangeType"], typeof this["RangeType"]] {
     const i = this.dimension
     const j = 1 - i
     const {ranges} = this.coordinates
@@ -779,7 +774,7 @@ export namespace Axis {
 
 export interface Axis extends Axis.Attrs {}
 
-export class Axis extends GuideRenderer {
+export abstract class Axis extends GuideRenderer {
   declare properties: Axis.Props
   declare __view_type__: AxisView
 
@@ -788,8 +783,6 @@ export class Axis extends GuideRenderer {
   }
 
   static {
-    this.prototype.default_view = AxisView
-
     this.mixins<Axis.Mixins>([
       ["axis_",        mixins.Line],
       ["major_tick_",  mixins.Line],
